@@ -1,0 +1,86 @@
+---
+version: "3.8"
+
+services:
+  docker-mailserver:
+    image: ghcr.io/docker-mailserver/docker-mailserver:edge
+    ports:
+      - "25:25/tcp"
+      - "[::]:25:25/tcp"
+      - "143:143/tcp"
+      - "[::]:143:143/tcp"
+      - "465:465/tcp"
+      - "[::]:465:465/tcp"
+      - "587:587/tcp"
+      - "[::]:587:587/tcp"
+      - "993:993/tcp"
+      - "[::]:993:993/tcp"
+    networks:
+      - proxy
+    environment:
+      - "ENABLE_AMAVIS=1"
+      - "ENABLE_CLAMAV=1"
+      - "ENABLE_FAIL2BAN=1"
+      - "ENABLE_FETCHMAIL=1"
+      - "ENABLE_MANAGESIEVE=1"
+      - "ENABLE_POSTGREY=1"
+      - "ENABLE_QUOTAS=1"
+      - "ENABLE_SASLAUTHD=0"
+      - "ENABLE_SPAMASSASSIN=1"
+      - "ENABLE_SRS=1"
+      - "ENABLE_UPDATE_CHECK=1"
+      - "AMAVIS_LOGLEVEL=0"
+      - "DMS_DEBUG=0"
+      - "FAIL2BAN_BLOCKTYPE=drop"
+      - "FETCHMAIL_POLL=300"
+      - "LOGWATCH_INTERVAL=weekly"
+      - "MOVE_SPAM_TO_JUNK=1"
+      - "ONE_DIR=1"
+      - "PFLOGSUMM_TRIGGER=logrotate"
+      - "POSTFIX_INET_PROTOCOLS=all"
+      - "POSTFIX_MESSAGE_SIZE_LIMIT=104857600"
+      - "POSTGREY_AUTO_WHITELIST_CLIENTS=5"
+      - "POSTGREY_DELAY=300"
+      - "POSTGREY_MAX_AGE=35"
+      - "POSTGREY_TEXT=Delayed by Postgrey"
+      - "POSTSCREEN_ACTION=enforce"
+      - "SA_TAG=2.0"
+      - "SA_TAG2=6.31"
+      - "SA_KILL=6.31"
+      - "SA_SPAM_SUBJECT=***SPAM***"
+      - "SPAMASSASSIN_SPAM_TO_INBOX=1"
+      - "SPOOF_PROTECTION=1"
+      - "SRS_SENDER_CLASSES=envelope_sender"
+      - "SRS_SECRET=${DOCKER_MAILSERVER_SRS_SECRET}"
+      - "SSL_TYPE=letsencrypt"
+      - "UPDATE_CHECK_INTERVAL=1d"
+      - "VIRUSMAILS_DELETE_DELAY=30"
+    volumes:
+      - "./compose.d/docker-mailserver/conf.d:/tmp/docker-mailserver:rw"
+      - "./compose.d/docker-mailserver/logs.d:/var/log/mail:rw"
+      - "./compose.d/docker-mailserver/mail.d:/var/mail:rw"
+      - "./compose.d/docker-mailserver/temp.d:/var/mail-state:rw"
+      - "${DOCKER_MAILSERVER_VOLUME_ACME_JSON}:/etc/letsencrypt/acme.json:ro"
+    cap_add:
+      - NET_ADMIN
+      - SYS_PTRACE
+    dns:
+      - 141.1.1.1 # CW Vodafone Group PLC
+      - 195.27.1.1 # CW Vodafone Group PLC
+      - 176.9.93.198 # dnsforge.de
+      - 176.9.1.117 # dnsforge.de
+      - 212.66.129.107 # NetAachen GmbH
+      - 212.66.129.108 # NetAachen GmbH
+    hostname: ${DOCKER_MAILSERVER_HOSTNAME}
+    restart: always
+    container_name: ${DOCKER_MAILSERVER_CONTAINER_NAME}
+  whoami:
+    image: ghcr.io/runcher/whoami:main
+    networks:
+      - proxy
+    restart: always
+    container_name: ${WHOAMI_CONTAINER_NAME}
+
+networks:
+  proxy:
+    external: true
